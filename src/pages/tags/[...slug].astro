@@ -23,7 +23,7 @@ export async function getStaticPaths() {
     const slug = tag.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
     return {
       params: { slug: slug },
-      props: { tag: tag } // Include both the slug and original tag
+      props: { tag: tag.toLowerCase() } // Include both the slug and original tag
     };
   });
 
@@ -43,7 +43,8 @@ const filteredPosts: any[] = [];
 
 // Using for...of to await asynchronous requests
 for (const post of AllPosts) {
-  if (post.tags.length > 0 && post.tags.includes(tag)) {
+
+  if (post.tags.length > 0 && post.tags.map(tag => tag.toLowerCase()).includes(tag.toLowerCase())) {
     const posts = await directus.request(readItems("Blogs", {
       fields: [
         "slug",

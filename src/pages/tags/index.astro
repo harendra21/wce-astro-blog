@@ -16,17 +16,21 @@ function createSlug(str) {
     .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
 }
 
+function toTitleCase(str) {
+  return str.toLowerCase().split(' ').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ');
+}
+
 function countUniqueTagsWithSlug(data) {
   const tagCounts = {};
-  
-  
   data.forEach(item => {
     if (Array.isArray(item.tags)) {
       item.tags.forEach(tag => {
         const normalizedTag = tag.toLowerCase();
         if (!tagCounts[normalizedTag]) {
           tagCounts[normalizedTag] = {
-            tag: tag,
+            tag: toTitleCase(tag),
             slug: createSlug(tag),
             count: 0
           };
