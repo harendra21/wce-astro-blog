@@ -1,0 +1,120 @@
+---
+import directus from "../../../lib/directus";
+import { readItems } from "@directus/sdk";
+import BaseHead from "../../components/BaseHead.astro";
+import Footer from "../../components/Footer.astro";
+import Header from "../../components/Header.astro";
+import { marked } from 'marked'
+const dirctus_url = import.meta.env.DIRECTUS_URL;
+
+function createSlug(str) {
+  return str
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove non-word chars
+    .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+}
+
+export async function getStaticPaths() {
+	const posts = await directus.request(readItems("Blogs", {
+		fields: ['*'],
+		limit: 500
+	}));
+	return posts.map((post) => ({ params: { slug: post.slug }, props: post }));
+}
+
+const post = Astro.props;
+const content = marked.parse(post.content);
+
+var tags: any[] = []
+post.tags.forEach(tag => {
+	let refinedTag = createSlug(tag)
+	tags.push(refinedTag)
+})
+
+---
+
+<html lang="en">
+	<head>
+		<BaseHead title={post.title} description={post.meta_description} canonicalURL={post.canonical_url} image={dirctus_url+"/assets/"+ post.banner}/>
+	</head>
+
+	<body>
+		<Header />
+		<main>
+			<article>
+
+				<div class="container mx-auto px-4 lg:px-4 py-12">
+					<!-- Header Section -->
+					<div class="max-w-5xl mx-auto mb-8">
+					  <!-- Blog Title -->
+					  <h1 class="text-4xl font-bold text-gray-900 leading-tight mb-4">{post.title}</h1>
+					  
+					  <div class="text-lg mb-5">Published At: <span class="text-gray-500">{post.published_at}</span></div>
+
+					  {post.banner && <img width={1020} height={510} src={dirctus_url+"/assets/"+ post.banner + "?width=1020"} alt={post.title} />}
+					</div>
+				  
+					<!-- Main Content Section -->
+					<div class="max-w-5xl mx-auto" set:html={content}></div>
+
+					<!-- Tags -->
+					{tags.map((tag) => (
+
+						<a href={ "/tags/"+tag } class="inline-block bg-gray-200 text-gray-500 text-sm font-semibold px-6 py-3 rounded-full hover:bg-gray-300 transition mr-3">
+							{tag}
+						</a>
+
+					))}
+					
+				  
+					<!-- Footer Section -->
+					<!--div class="max-w-3xl mx-auto border-t border-gray-300 mt-12 pt-6">
+					  
+					  <div class="flex items-center space-x-4 mb-8">
+						<img src="/path-to-author-image.jpg" alt="Author" class="w-16 h-16 rounded-full">
+						<div>
+						  <p class="text-lg font-semibold text-gray-900">About the Author</p>
+						  <p class="text-gray-600">
+							Author Name is a software engineer with a focus on backend architectures and modern development practices...
+						  </p>
+						</div>
+					  </div>
+				  
+					  
+					  <div class="mt-8">
+						<p class="text-lg font-semibold text-gray-900 mb-4">Related Articles</p>
+						<ul class="list-disc pl-5 space-y-2">
+						  <li><a href="#" class="text-blue-600 hover:underline">Understanding Microservices Architecture</a></li>
+						  <li><a href="#" class="text-blue-600 hover:underline">Why BFF is the Next Step for Scalable Frontend Development</a></li>
+						</ul>
+					  </div>
+					</div-->
+
+					
+
+				  </div>
+				<!-- <div class="hero-image">
+					{post.Banner && <img width={1020} height={510} src={dirctus_url+"/assets/"+ post.Banner + "?width=1020"} alt={post.Title} />}
+				</div>
+				<div class="prose">
+					<div class="title">
+						<div class="date">
+							<FormattedDate date={new Date(post.Published_At)} />
+							
+						</div>
+						<h1>{post.Title}</h1>
+						
+						<hr />
+					</div>
+					<p set:html={content}></p>
+					<slot />
+				</div> -->
+
+
+
+			</article>
+		</main>
+		<Footer />
+	</body>
+</html>

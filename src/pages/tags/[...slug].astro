@@ -1,0 +1,94 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+import directus from "../../../lib/directus";
+import { readItems, readSingleton } from "@directus/sdk";
+import PostCard from '../../components/PostCard.astro';
+
+
+export async function getStaticPaths() {
+
+  const allPosts = await directus.request(readItems("Blogs", {
+    fields: ['tags'],
+    limit: -1, // Fetch all posts
+  }));
+
+  // Collect all unique tags from the posts
+  const allTags = [...new Set(allPosts.flatMap(post => post.tags || []))]; // Handle posts without tags
+  
+  // Generate paths for each tag
+  const paths = allTags.map(tag => {
+    const slug = tag.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+    return {
+      params: { slug: slug },
+      props: { tag: tag } // Include both the slug and original tag
+    };
+  });
+
+  return paths;
+}
+
+const { slug } = Astro.params;
+const { tag } = Astro.props
+const global = await directus.request(readSingleton("Global"));
+const AllPosts = await directus.request(readItems("Blogs", {
+  fields: ['slug', "tags"],
+  limit: -1,
+}));
+
+// Array to hold the filtered posts
+const filteredPosts: any[] = [];
+
+// Using for...of to await asynchronous requests
+for (const post of AllPosts) {
+  console.log(post.tags)
+  if (post.tags.length > 0 && post.tags.includes(tag)) {
+    const posts = await directus.request(readItems("Blogs", {
+      fields: [
+        "slug",
+        "title",
+        "published_at",
+        "banner",
+        "meta_description"
+      ],
+      sort: ["-published_at"],
+      limit: -1,
+      filter: {
+        slug: {
+          "_contains": post.slug
+        }
+      }
+    }));
+
+    // Collect the filtered posts
+    filteredPosts.push(...posts);
+  }
+}
+
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={global.title} description={global.description} />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <h1>Posts tagged with "{slug}"</h1>
+      <section class="articles-grid">
+        {filteredPosts.map((post) => (
+          <PostCard title={post.title} description={post.meta_description} image={post.banner} slug={post.slug} />
+        ))}
+      </section>
+    </main>
+    <Footer />
+
+    <script>
+      // Your existing client-side JavaScript for infinite scrolling
+      // Note: You may need to adjust this for server-side rendering in Astro
+    </script>
+  </body>
+</html>

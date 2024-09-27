@@ -1,0 +1,132 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+import directus from "../../../lib/directus";
+import { readItems, readSingleton } from "@directus/sdk";
+import PostCard from '../../components/PostCard.astro';
+
+const global = await directus.request(readSingleton("Global"));
+
+const dirctus_url = import.meta.env.DIRECTUS_URL;
+const pageSize = 20
+
+const posts = await directus.request(
+  readItems("Blogs", {
+    fields: [
+      "slug",
+      "title",
+      "published_at",
+	  "banner",
+	  "meta_description"
+    ],
+    sort: ["-published_at"],
+	limit: pageSize
+  })
+);
+
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={global.title} description={global.description} />
+		
+	</head>
+	<body>
+		<Header />
+		<main>
+			<section class="articles-grid">
+					{
+						posts.map((post) => (
+						<PostCard title={post.title} description={post.meta_description} image={post.banner} slug={post.slug} />
+						))
+					}
+					<div id="article-loader" style="display: none;">Loading more articles...</div>
+
+			</section>
+		</main>
+		<Footer />
+
+		<script define:vars={{ dirctus_url, pageSize }}>
+			let isLoading = false;
+			let hasMore = true;
+			let currentPage = 1;
+			const articleLoader = document.getElementById("article-loader");
+			const articlesGrid = document.querySelector(".articles-grid");
+
+			const fetchMoreArticles = async () => {
+				console.log("Load New article")
+				if (isLoading || !hasMore) return;
+				isLoading = true;
+				if (articleLoader) articleLoader.style.display = "block";
+				try {
+					const response = await fetch(`${dirctus_url}/items/Blogs/?limit=${pageSize}&offset=${currentPage * pageSize}&sort=-published_at&fields=slug,title,published_at,banner,meta_description`);
+					const data = await response.json();
+
+					if (data.data && data.data.length > 0){
+						currentPage++
+						data.data.forEach((post) => {
+							const articleElement = document.createElement("div");
+							var html = `<a href="/blog/${post.slug}" class="container mx-auto px-4 py-12">
+								<div class="grid grid-cols-1 md:grid-cols-6 gap-8 items-center">
+									<div class="md:col-span-4">
+										<h1 class="text-2xl font-bold mb-4">${ post.title }</h1>
+										<p class="text-gray-600 text-lg">
+											${ post.meta_description.substring(0, 90) } ${ post.meta_description.length > 90 ? "...": ""}
+										</p>
+									</div>
+									<div class="md:col-span-2 flex justify-center">
+										<div class="overflow-hidden transform hover:scale-110 transition-transform duration-300 ease-in-out">
+											<img src="${dirctus_url}/assets/${post.banner}?width=200" alt="${post.title}" class="max-w-full h-auto">
+										</div>
+									</div>
+								</div>
+							</a>`
+							articleElement.innerHTML = html
+							if(articlesGrid) articlesGrid.appendChild(articleElement);
+							
+						})
+
+					}else{
+						hasMore = false
+					}
+				
+				}catch (error) {
+					console.error("Error fetching articles:", error);
+					hasMore = false;
+				}finally {
+					isLoading = false;
+					if(articleLoader) articleLoader.style.display = hasMore ? "none" : "block";
+					if(articleLoader) articleLoader.textContent = hasMore
+						? "Loading more articles..."
+						: "No more articles to load.";
+
+					if (!hasMore) {
+						window.removeEventListener("scroll", handleScroll);
+						console.log("No more articles, removed scroll listener");
+					}
+					}
+			};
+
+			 const handleScroll = () => {
+				if (isLoading || !hasMore) return;
+
+				const scrollHeight = document.documentElement.scrollHeight;
+				const scrollTop = window.scrollY || document.documentElement.scrollTop;
+				const clientHeight =
+				window.innerHeight || document.documentElement.clientHeight;
+
+				if (scrollTop + clientHeight >= scrollHeight - 200) {
+					console.log(`Triggering fetch for page ${currentPage + 1}`);
+					fetchMoreArticles();
+				}
+			};
+
+			window.addEventListener("scroll", handleScroll);
+		</script>
+
+
+	</body>
+</html>

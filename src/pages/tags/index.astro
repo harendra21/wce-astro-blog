@@ -1,0 +1,79 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+import directus from "../../../lib/directus";
+import { readItems, readSingleton } from "@directus/sdk";
+
+const global = await directus.request(readSingleton("Global"));
+
+function createSlug(str) {
+  return str
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove non-word chars
+    .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+}
+
+function countUniqueTagsWithSlug(data) {
+  const tagCounts = {};
+  
+  
+  data.forEach(item => {
+    if (Array.isArray(item.tags)) {
+      item.tags.forEach(tag => {
+        const normalizedTag = tag.toLowerCase();
+        if (!tagCounts[normalizedTag]) {
+          tagCounts[normalizedTag] = {
+            tag: tag,
+            slug: createSlug(tag),
+            count: 0
+          };
+        }
+        tagCounts[normalizedTag].count += 1;
+      });
+    }
+  });
+  
+  return Object.values(tagCounts).sort((a: any, b: any) => b.count - a.count);
+}
+const posts = await directus.request(
+  readItems("Blogs", {
+    fields: [
+      "tags"
+    ],
+    sort: ["-published_at"],
+	limit: -1
+  })
+);
+
+
+const uniqueTagsWithCount = countUniqueTagsWithSlug(posts);
+
+---
+
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={global.title} description={global.description} />
+		
+	</head>
+	<body>
+		<Header />
+		<main>
+			<section class="articles-grid">
+					{
+						uniqueTagsWithCount.map((tag: any) => (
+							<a  href={ "/tags/"+tag.slug } class="inline-block bg-gray-200 text-gray-500 text-sm font-semibold px-6 py-3 rounded-full hover:bg-gray-300 transition mr-3">
+								{tag.tag} - {tag.count}
+							</a>
+						))
+					}
+			</section>
+		</main>
+		<Footer />
+
+	</body>
+</html>

@@ -1,0 +1,62 @@
+---
+import { readSingleton } from '@directus/sdk';
+import directus from '../../lib/directus';
+import HeaderLink from './HeaderLink.astro';
+const global = await directus.request(readSingleton("Global"));
+const dirctus_url = import.meta.env.DIRECTUS_URL;
+
+---
+
+<header>
+	<nav>
+		<div><a href="/"><img src={ dirctus_url+"/assets/"+global.logo+"?width=25"} alt={global.title}></a></div>
+		<div class="internal-links">
+			<HeaderLink href="/">Home</HeaderLink>
+			<HeaderLink href="/blog">Blog</HeaderLink>
+			<HeaderLink href="/tags">Tags</HeaderLink>
+			<HeaderLink href="/about-us">About</HeaderLink>
+		</div>
+		
+	</nav>
+</header>
+<style>
+	header {
+		margin: 0;
+		padding: 0 1em;
+		background: white;
+		box-shadow: 0 2px 8px rgba(var(--black), 5%);
+	}
+	h2 {
+		margin: 0;
+		font-size: 1em;
+	}
+
+	h2 a,
+	h2 a.active {
+		text-decoration: none;
+	}
+	nav {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+	nav a {
+		padding: 1em 0.5em;
+		color: var(--black);
+		border-bottom: 4px solid transparent;
+		text-decoration: none;
+	}
+	nav a.active {
+		text-decoration: none;
+		border-bottom-color: var(--accent);
+	}
+	.social-links,
+	.social-links a {
+		display: flex;
+	}
+	@media (max-width: 720px) {
+		.social-links {
+			display: none;
+		}
+	}
+</style>
