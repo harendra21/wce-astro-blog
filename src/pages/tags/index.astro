@@ -70,9 +70,12 @@ const uniqueTagsWithCount = countUniqueTagsWithSlug(posts);
 			<section class="articles-grid">
 					{
 						uniqueTagsWithCount.map((tag: any) => (
-							<a  href={ "/tags/"+tag.slug } class="inline-block bg-gray-200 text-gray-500 text-sm font-semibold px-6 py-3 rounded-full hover:bg-gray-300 transition mr-3">
-								{tag.tag} - {tag.count}
-							</a>
+              <div class="inline-block mt-5">
+                <a  href={ "/tags/"+tag.slug } class="inline-block bg-gray-200 text-gray-500 text-sm font-semibold px-6 py-3 rounded-full hover:bg-gray-300 transition mr-3">
+                    {tag.tag} - {tag.count}
+                </a>
+              </div>
+							
 						))
 					}
 			</section>

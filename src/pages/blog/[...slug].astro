@@ -5,7 +5,9 @@ import BaseHead from "../../components/BaseHead.astro";
 import Footer from "../../components/Footer.astro";
 import Header from "../../components/Header.astro";
 import { marked } from 'marked'
+import SocialShare from "../../components/SocialShare.astro";
 const dirctus_url = import.meta.env.DIRECTUS_URL;
+const site_domain = import.meta.env.SITE_DOMAIN;
 
 function createSlug(str) {
   return str
@@ -32,6 +34,22 @@ post.tags.forEach(tag => {
 	tags.push(refinedTag)
 })
 
+var seriesPosts: any[] = [] 
+if(post.series){
+	const posts = await directus.request(readItems("Blogs", {
+		fields: ['title','slug'],
+		limit: 500,
+		filter: {
+			series : {
+				"_eq": post.series
+			}
+		},
+		sort: "published_at"
+	}));
+	seriesPosts.push(...posts)
+	
+}
+
 ---
 
 <html lang="en">
@@ -52,7 +70,27 @@ post.tags.forEach(tag => {
 					  
 					  <div class="text-lg mb-5">Published At: <span class="text-gray-500">{post.published_at}</span></div>
 
-					  {post.banner && <img width={680} height={255} src={dirctus_url+"/assets/"+ post.banner + "?width=680"} alt={post.title} />}
+					  {post.banner && <img width={648} height={389} src={dirctus_url+"/assets/"+ post.banner + "?width=648"} alt={post.title} />}
+
+					  {seriesPosts.length > 0 && (
+						<div class="mt-5 text-xl font-semibold">
+						  {post.series}
+						</div>
+						  <ul>
+							{seriesPosts.map((seriesPost: any) => (
+							  <li key={seriesPost.slug}>
+								<a 
+								  href={"/blog/" + seriesPost.slug}
+								  class={seriesPost.slug === post.slug ? "text-blue-500 font-semibold" : "text-gray-800"}
+								>
+								  {seriesPost.title}
+								</a>
+							  </li>
+							))}
+						  </ul>
+						
+					  )}
+
 					</div>
 				  
 					<!-- Main Content Section -->
@@ -60,13 +98,15 @@ post.tags.forEach(tag => {
 
 					<!-- Tags -->
 					{tags.map((tag) => (
-
 						<a href={ "/tags/"+tag } class="inline-block bg-gray-200 text-gray-500 text-sm font-semibold px-6 py-3 rounded-full hover:bg-gray-300 transition mr-3">
 							{tag}
 						</a>
-
 					))}
-					
+
+					<div class="mt-5">
+						Share On
+					<SocialShare title={post.title} url={site_domain+"/blog/"+post.slug} />
+					</div>
 				  
 					<!-- Footer Section -->
 					<!--div class="max-w-3xl mx-auto border-t border-gray-300 mt-12 pt-6">

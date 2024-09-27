@@ -168,3 +168,6 @@ pre{
     font-size: 14px;
     line-height: 20px;
 }
+article img {
+	width: 100%;
+}
