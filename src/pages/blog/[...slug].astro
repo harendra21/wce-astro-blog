@@ -78,7 +78,7 @@ if(post.series){
 						</div>
 						  <ul>
 							{seriesPosts.map((seriesPost: any) => (
-							  <li key={seriesPost.slug}>
+							  <li>
 								<a 
 								  href={"/blog/" + seriesPost.slug}
 								  class={seriesPost.slug === post.slug ? "text-blue-500 font-semibold" : "text-gray-800"}
