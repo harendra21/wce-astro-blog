@@ -6,7 +6,7 @@ import Footer from '../../components/Footer.astro';
 import directus from "../../../lib/directus";
 import { readItems, readSingleton } from "@directus/sdk";
 import PostCard from '../../components/PostCard.astro';
-
+const global = await directus.request(readSingleton("Global"));
 
 export async function getStaticPaths() {
 
@@ -32,40 +32,17 @@ export async function getStaticPaths() {
 
 const { slug } = Astro.params;
 const { tag } = Astro.props
-const global = await directus.request(readSingleton("Global"));
+
 const AllPosts = await directus.request(readItems("Blogs", {
-  fields: ['slug', "tags"],
+  fields: ["title", "slug", "tags", "banner", "meta_description"],
   limit: -1,
+  sort: ["-published_at"],
 }));
 
-// Array to hold the filtered posts
-const filteredPosts: any[] = [];
-
 // Using for...of to await asynchronous requests
-for (const post of AllPosts) {
-
-  if (post.tags.length > 0 && post.tags.map(tag => tag.toLowerCase()).includes(tag.toLowerCase())) {
-    const posts = await directus.request(readItems("Blogs", {
-      fields: [
-        "slug",
-        "title",
-        "published_at",
-        "banner",
-        "meta_description"
-      ],
-      sort: ["-published_at"],
-      limit: -1,
-      filter: {
-        slug: {
-          "_contains": post.slug
-        }
-      }
-    }));
-
-    // Collect the filtered posts
-    filteredPosts.push(...posts);
-  }
-}
+const filteredPosts = AllPosts.filter(post =>
+  post.tags?.some(t => t.toLowerCase() === tag.toLowerCase())
+);
 
 ---
 

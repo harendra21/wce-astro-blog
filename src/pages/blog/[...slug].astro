@@ -47,7 +47,6 @@ if(post.series){
 		sort: "published_at"
 	}));
 	seriesPosts.push(...posts)
-	
 }
 
 ---
@@ -105,7 +104,7 @@ if(post.series){
 
 					<div class="mt-5">
 						Share On
-					<SocialShare title={post.title} url={site_domain+"/blog/"+post.slug} />
+					<SocialShare title={post.title} url={Astro.url} />
 					</div>
 				  
 					<!-- Footer Section -->
@@ -131,8 +130,6 @@ if(post.series){
 					  </div>
 					</div-->
 
-					
-
 				  </div>
 				<!-- <div class="hero-image">
 					{post.Banner && <img width={1020} height={510} src={dirctus_url+"/assets/"+ post.Banner + "?width=1020"} alt={post.Title} />}
@@ -150,9 +147,6 @@ if(post.series){
 					<p set:html={content}></p>
 					<slot />
 				</div> -->
-
-
-
 			</article>
 		</main>
 		<Footer />
